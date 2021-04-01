@@ -1,6 +1,6 @@
 # Test Summary Buildkite Plugin
 
-A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) that adds a single annotation
+A [Buildkite plugin](https://buildkite.com/docs/agent/v3/plugins) that adds annotations
 for all your test failures using
 [buildkite-agent annotate](https://buildkite.com/docs/agent/v3/cli-annotate).
 
@@ -147,7 +147,7 @@ Other formatter options are:
 
 ### Other options
 
-* `context:` The Buildkite annotation context. Defaults to `test-summary`.
+* `context:` The prefix used to generate the Buildkite annotation context. Defaults to `test-summary`.
 * `style:` Set the annotation style. Defaults to `error`.
 * `fail_on_error:` Whether the command should return non-zero exit status on failure. Defaults to `false` so failing
   to annotate a build does not cause the entire pipeline to fail.

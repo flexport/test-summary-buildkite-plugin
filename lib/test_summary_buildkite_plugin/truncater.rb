@@ -13,7 +13,7 @@ module TestSummaryBuildkitePlugin
 
     def markdown
       requested = with_truncation(nil)
-      if requested.empty? || requested.bytesize < max_size
+      if requested.nil? || requested.empty? || requested.bytesize < max_size
         # we can use it as-is, no need to truncate
         return requested
       end

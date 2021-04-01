@@ -4,57 +4,61 @@ module TestSummaryBuildkitePlugin
   class Processor
     include ErrorHandler
 
-    attr_reader :formatter_options, :max_size, :output_path, :inputs, :fail_on_error
+    attr_reader :formatter_options, :max_size, :inputs, :fail_on_error
 
-    def initialize(formatter_options:, max_size:, output_path:, inputs:, fail_on_error:)
+    def initialize(formatter_options:, max_size:, inputs:, fail_on_error:)
       @formatter_options = formatter_options
       @max_size = max_size
-      @output_path = output_path
       @inputs = inputs
       @fail_on_error = fail_on_error
       @_formatters = {}
     end
 
-    def truncated_markdown
-      @truncated_markdown ||= begin
+    def markdowns
+      inputs.each_with_index.map do |input, idx|
         truncater = Truncater.new(
           max_size: max_size,
-          max_truncate: inputs.map(&:failures).map(&:count).max
+          max_truncate: input.failures.count
         ) do |truncate|
-          inputs_markdown(truncate)
+          input_markdown(idx, truncate)
         end
 
-        truncater.markdown
+        { truncated: truncater.markdown, full: input_markdown(idx), output_path: output_path(idx) }
       rescue StandardError => e
         handle_error(e, diagnostics)
-        HamlRender.render('truncater_exception', {})
+        result = HamlRender.render('truncater_exception', {})
+        { truncated: result, full: result, output_path: output_path(idx) }
       end
-    end
-
-    def inputs_markdown(truncate = nil)
-      inputs.map { |input| input_markdown(input, truncate) }.compact.join("\n\n")
     end
 
     private
 
-    def input_markdown(input, truncate)
-      formatter(input).markdown(truncate)
+    def input_markdown(idx, truncate = nil)
+      formatter(idx).markdown(truncate)
     rescue StandardError => e
       handle_error(e)
     end
 
-    def formatter(input)
-      @_formatters[input] ||= Formatter.create(input: input, output_path: output_path, options: formatter_options)
+    def formatter(idx)
+      @_formatters[idx] ||= Formatter.create(
+        input: inputs[idx],
+        output_path: output_path(idx),
+        options: formatter_options
+      )
+    end
+
+    def output_path(idx)
+      "test-summary-#{idx}.html"
     end
 
     def diagnostics
       {
         formatter: formatter_options,
-        inputs: inputs.map do |input|
+        inputs: inputs.each_with_index.map do |input, idx|
           {
             type: input.class,
             failure_count: input.failures.count,
-            markdown_bytesize: input_markdown(input, nil)&.bytesize
+            markdown_bytesize: input_markdown(idx)&.bytesize
           }
         end
       }

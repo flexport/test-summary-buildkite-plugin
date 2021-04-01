@@ -7,7 +7,6 @@ RSpec.describe TestSummaryBuildkitePlugin::Processor do
     described_class.new(
       formatter_options: {},
       max_size: 50_000,
-      output_path: 'foo',
       inputs: inputs,
       fail_on_error: fail_on_error
     )
@@ -22,9 +21,9 @@ RSpec.describe TestSummaryBuildkitePlugin::Processor do
     let(:inputs) { [input1, input2] }
 
     before do
-      allow(processor).to receive(:formatter).with(input1).and_return(formatter1)
+      allow(processor).to receive(:formatter).with(0).and_return(formatter1)
       allow(formatter1).to receive(:markdown).with(nil).and_raise('life sucks')
-      allow(processor).to receive(:formatter).with(input2).and_return(formatter2)
+      allow(processor).to receive(:formatter).with(1).and_return(formatter2)
       allow(formatter2).to receive(:markdown).with(nil).and_return('awesome markdown')
       allow(input1).to receive(:failures).and_return([])
       allow(input2).to receive(:failures).and_return([])
@@ -34,11 +33,11 @@ RSpec.describe TestSummaryBuildkitePlugin::Processor do
       let(:fail_on_error) { false }
 
       it 'continues' do
-        expect(processor.truncated_markdown).to include('awesome markdown')
+        expect(processor.markdowns[1][:truncated]).to eq('awesome markdown')
       end
 
       it 'logs the error' do
-        expect { processor.truncated_markdown }.to output(/life sucks/).to_stdout
+        expect { processor.markdowns }.to output(/life sucks/).to_stdout
       end
     end
 
@@ -46,7 +45,7 @@ RSpec.describe TestSummaryBuildkitePlugin::Processor do
       let(:fail_on_error) { true }
 
       it 'raises error' do
-        expect { processor.truncated_markdown }.to raise_error('life sucks')
+        expect { processor.markdowns }.to raise_error('life sucks')
       end
     end
   end

@@ -26,15 +26,26 @@ RSpec.describe TestSummaryBuildkitePlugin::Main do
   context 'with failures' do
     let(:inputs) do
       [
-        label: 'rspec',
-        type: 'junit',
-        artifact_path: 'rspec*'
+        {
+          label: 'rspec',
+          type: 'junit',
+          artifact_path: 'rspec*'
+        }, {
+          label: 'xunit',
+          type: 'junit',
+          artifact_path: 'xunit*'
+        }
       ]
     end
 
     it 'calls annotate with correct args' do
       run
-      expect(agent_annotate_commands.first).to include('annotate', '--context', 'test-summary', '--style', 'error')
+      expect(agent_annotate_commands).to match(
+        [
+          start_with(['annotate', '--context', 'test-summary-1', '--style', 'error']),
+          start_with(['annotate', '--context', 'test-summary-0', '--style', 'error'])
+        ]
+      )
       expect(agent_artifact_commands).to include(include('artifact', 'upload', 'test-summary.html'))
     end
 
@@ -43,7 +54,12 @@ RSpec.describe TestSummaryBuildkitePlugin::Main do
 
       it 'calls annotate with correct args' do
         run
-        expect(agent_annotate_commands.first).to include('annotate', '--context', 'test-summary', '--style', 'warning')
+        expect(agent_annotate_commands).to match(
+          [
+            start_with(['annotate', '--context', 'test-summary-1', '--style', 'warning']),
+            start_with(['annotate', '--context', 'test-summary-0', '--style', 'warning'])
+          ]
+        )
       end
     end
 
@@ -52,7 +68,12 @@ RSpec.describe TestSummaryBuildkitePlugin::Main do
 
       it 'calls annotate with correct args' do
         run
-        expect(agent_annotate_commands.first).to include('annotate', '--context', 'ponies', '--style', 'error')
+        expect(agent_annotate_commands).to match(
+          [
+            start_with(['annotate', '--context', 'ponies-1', '--style', 'error']),
+            start_with(['annotate', '--context', 'ponies-0', '--style', 'error'])
+          ]
+        )
       end
     end
   end

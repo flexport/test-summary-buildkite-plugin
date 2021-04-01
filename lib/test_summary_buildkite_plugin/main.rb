@@ -3,7 +3,6 @@
 module TestSummaryBuildkitePlugin
   class Main
     MAX_MARKDOWN_SIZE = 100_000
-    OUTPUT_PATH = 'test-summary.html'
 
     attr_reader :options
 
@@ -15,28 +14,29 @@ module TestSummaryBuildkitePlugin
       processor = Processor.new(
         formatter_options: formatter,
         max_size: MAX_MARKDOWN_SIZE,
-        output_path: OUTPUT_PATH,
         inputs: inputs,
         fail_on_error: fail_on_error
       )
 
-      if processor.truncated_markdown.nil? || processor.truncated_markdown.empty?
-        puts('No errors found! 🎉')
-      else
-        upload_artifact(processor.inputs_markdown)
-        annotate(processor.truncated_markdown)
+      processor.markdowns.each_with_index.reverse_each do |result, idx|
+        if result[:truncated].nil? || result[:truncated].empty?
+          puts('No errors found! 🎉')
+        else
+          upload_artifact(result[:full], result[:output_path])
+          annotate(result[:truncated], idx)
+        end
       end
     end
 
     private
 
-    def upload_artifact(markdown)
-      File.write(OUTPUT_PATH, Utils.standalone_markdown(markdown))
-      Agent.run('artifact', 'upload', OUTPUT_PATH)
+    def upload_artifact(markdown, output_path)
+      File.write(output_path, Utils.standalone_markdown(markdown))
+      Agent.run('artifact', 'upload', output_path)
     end
 
-    def annotate(markdown)
-      Agent.run('annotate', '--context', context, '--style', style, stdin: markdown)
+    def annotate(markdown, idx)
+      Agent.run('annotate', '--context', "#{context}-#{idx}", '--style', style, stdin: markdown)
     end
 
     def formatter
