@@ -20,11 +20,11 @@ TAG=$(git describe --tags --exact-match 2> /dev/null || true)
 
 if [[ -n "$TAG" ]]; then
     echo "Found tag $TAG, pulling from docker hub"
-    IMAGE="$DOCKER_REPO:$TAG"
+    IMAGE="artifactory.flexport.io/docker/$DOCKER_REPO:$TAG"
     docker pull "$IMAGE"
 else
     echo "No tag found, building image locally"
-    IMAGE=test-summary:$BUILDKITE_JOB_ID
+    IMAGE="artifactory.flexport.io/docker/test-summary:$BUILDKITE_JOB_ID"
     docker build -t "$IMAGE" .
 fi
 
