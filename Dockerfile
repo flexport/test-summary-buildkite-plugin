@@ -1,4 +1,5 @@
-FROM ruby:2.5.1-alpine
+# TODO get repo from arg
+FROM artifactory.flexport.io/docker/ruby:2.5.1-alpine
 
 # Fetch/install gems
 RUN mkdir -p /opt/gems
